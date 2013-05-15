@@ -196,6 +196,11 @@ func (s *Skeleton) SetAttachment(slotName, attachmentName string) {
 	panic("Slot not found: " + slotName)
 }
 
+func (s *Skeleton) FindAnimation(name string) *Animation {
+	_, a := s.data.findAnimation(name)
+	return a
+}
+
 func (s *Skeleton) Update(dt float32) {
 	s.time += dt
 }

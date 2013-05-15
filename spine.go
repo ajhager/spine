@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"math"
 	"strconv"
 )
 
@@ -149,6 +150,60 @@ func Load(path string) *SkeletonData {
 			skeletonData.skins = append(skeletonData.skins, skin)
 			if skin.name == "default" {
 				skeletonData.defaultSkin = skin
+			}
+		}
+
+		if animsMap, ok := root["animations"].(map[string]interface{}); ok {
+			for animName, bonesMap := range animsMap {
+				timelines := make([]Timeline, 0)
+				duration := float32(0)
+				boneMap := bonesMap.(map[string]interface{})
+				bones := boneMap["bones"].(map[string]interface{})
+				for boneName, timelinesMap := range bones {
+					boneIndex, _ := skeletonData.findBone(boneName)
+					timelineMap := timelinesMap.(map[string]interface{})
+					for timelineType, timelinesData := range timelineMap {
+						timelineData := timelinesData.([]interface{})
+						if timelineType == "rotate" {
+							n := len(timelineData)
+							timeline := NewRotateTimeline(n)
+							timeline.boneIndex = boneIndex
+							for i := 0; i < n; i++ {
+								valueMap := timelineData[i].(map[string]interface{})
+								time := float32(valueMap["time"].(float64))
+								angle := float32(valueMap["angle"].(float64))
+								timeline.setFrame(i, time, angle)
+								// TODO: READ CURVE
+							}
+							duration = float32(math.Max(float64(duration), float64(timeline.frames[timeline.frameCount()*2-2])))
+
+							timelines = append(timelines, timeline)
+						} else if timelineType == "translate" {
+							n := len(timelineData)
+							timeline := NewTranslateTimeline(n)
+							timeline.boneIndex = boneIndex
+							for i := 0; i < n; i++ {
+								valueMap := timelineData[i].(map[string]interface{})
+								x := float32(0)
+								if xx, ok := valueMap["x"].(float64); ok {
+									x = float32(xx)
+								}
+								y := float32(0)
+								if yy, ok := valueMap["y"].(float64); ok {
+									y = float32(yy)
+								}
+								time := float32(valueMap["time"].(float64))
+
+								timeline.setFrame(i, time, x, y)
+								// TODO: curve
+							}
+							duration = float32(math.Max(float64(duration), float64(timeline.frames[timeline.frameCount()*3-3])))
+							timelines = append(timelines, timeline)
+						}
+					}
+				}
+				anim := NewAnimation(animName, timelines, duration)
+				skeletonData.animations = append(skeletonData.animations, anim)
 			}
 		}
 	}
