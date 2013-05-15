@@ -11,11 +11,13 @@ type Timeline interface {
 type RotateTimeline struct {
 	boneIndex int
 	frames    []float32
+	curve     *Curve
 }
 
 func NewRotateTimeline(l int) *RotateTimeline {
 	timeline := new(RotateTimeline)
 	timeline.frames = make([]float32, l*2)
+	timeline.curve = NewCurve(l)
 	return timeline
 }
 
@@ -43,7 +45,7 @@ func (t *RotateTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 	lastFrameValue := frames[frameIndex-1]
 	frameTime := frames[frameIndex]
 	percent := 1 - (time-frameTime)/(frames[frameIndex-2]-frameTime)
-	// TODO: curves
+	percent = t.curve.CurvePercent(frameIndex/2-1, percent)
 	amount := frames[frameIndex+1] - lastFrameValue
 	for amount > 180 {
 		amount -= 360
@@ -95,11 +97,13 @@ func (t *RotateTimeline) frameCount() int {
 type TranslateTimeline struct {
 	boneIndex int
 	frames    []float32
+	curve     *Curve
 }
 
 func NewTranslateTimeline(l int) *TranslateTimeline {
 	timeline := new(TranslateTimeline)
 	timeline.frames = make([]float32, l*3)
+	timeline.curve = NewCurve(l)
 	return timeline
 }
 
@@ -133,11 +137,59 @@ func (t *TranslateTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 	lastFrameY := frames[frameIndex-1]
 	frameTime := frames[frameIndex]
 	percent := 1 - (time-frameTime)/(frames[frameIndex-3]-frameTime)
-
-	// TODO: percent = this.curves.getCurvePercent(frameIndex / 3 - 1, percent)
+	percent = t.curve.CurvePercent(frameIndex/3-1, percent)
 
 	bone.X += (bone.data.x + lastFrameX + (frames[frameIndex+1]-lastFrameX)*percent - bone.X) * alpha
 	bone.Y += (bone.data.y + lastFrameY + (frames[frameIndex+2]-lastFrameY)*percent - bone.Y) * alpha
+}
+
+type ScaleTimeline struct {
+	boneIndex int
+	frames    []float32
+	curve     *Curve
+}
+
+func NewScaleTimeline(l int) *ScaleTimeline {
+	timeline := new(ScaleTimeline)
+	timeline.frames = make([]float32, l*3)
+	timeline.curve = NewCurve(l)
+	return timeline
+}
+
+func (t *ScaleTimeline) frameCount() int {
+	return len(t.frames) / 3
+}
+
+func (t *ScaleTimeline) setFrame(index int, time, x, y float32) {
+	frameIndex := index * 3
+	t.frames[frameIndex] = time
+	t.frames[frameIndex+1] = x
+	t.frames[frameIndex+2] = y
+}
+
+func (t *ScaleTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
+	frames := t.frames
+	if time < frames[0] {
+		return
+	}
+
+	bone := skeleton.bones[t.boneIndex]
+
+	if time >= frames[len(frames)-3] {
+		bone.ScaleX += (bone.data.scaleX - 1 + frames[len(frames)-2] - bone.ScaleX) * alpha
+		bone.ScaleY += (bone.data.scaleY - 1 + frames[len(frames)-1] - bone.ScaleY) * alpha
+		return
+	}
+
+	frameIndex := binarySearch(frames, time, 3)
+	lastFrameX := frames[frameIndex-2]
+	lastFrameY := frames[frameIndex-1]
+	frameTime := frames[frameIndex]
+	percent := 1 - (time-frameTime)/(frames[frameIndex-3]-frameTime)
+	percent = t.curve.CurvePercent(frameIndex/3-1, percent)
+
+	bone.ScaleX += (bone.data.scaleX - 1 + lastFrameX + (frames[frameIndex+1]-lastFrameX)*percent - bone.ScaleX) * alpha
+	bone.ScaleY += (bone.data.scaleY - 1 + lastFrameY + (frames[frameIndex+2]-lastFrameY)*percent - bone.ScaleY) * alpha
 }
 
 type Animation struct {

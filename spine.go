@@ -173,7 +173,9 @@ func Load(path string) *SkeletonData {
 								time := float32(valueMap["time"].(float64))
 								angle := float32(valueMap["angle"].(float64))
 								timeline.setFrame(i, time, angle)
-								// TODO: READ CURVE
+								if curve, ok := valueMap["curve"]; ok {
+									readCurve(timeline.curve, i, curve)
+								}
 							}
 							duration = float32(math.Max(float64(duration), float64(timeline.frames[timeline.frameCount()*2-2])))
 
@@ -181,6 +183,29 @@ func Load(path string) *SkeletonData {
 						} else if timelineType == "translate" {
 							n := len(timelineData)
 							timeline := NewTranslateTimeline(n)
+							timeline.boneIndex = boneIndex
+							for i := 0; i < n; i++ {
+								valueMap := timelineData[i].(map[string]interface{})
+								x := float32(0)
+								if xx, ok := valueMap["x"].(float64); ok {
+									x = float32(xx) * Scale
+								}
+								y := float32(0)
+								if yy, ok := valueMap["y"].(float64); ok {
+									y = float32(yy) * Scale
+								}
+								time := float32(valueMap["time"].(float64))
+
+								timeline.setFrame(i, time, x, y)
+								if curve, ok := valueMap["curve"]; ok {
+									readCurve(timeline.curve, i, curve)
+								}
+							}
+							duration = float32(math.Max(float64(duration), float64(timeline.frames[timeline.frameCount()*3-3])))
+							timelines = append(timelines, timeline)
+						} else if timelineType == "scale" {
+							n := len(timelineData)
+							timeline := NewScaleTimeline(n)
 							timeline.boneIndex = boneIndex
 							for i := 0; i < n; i++ {
 								valueMap := timelineData[i].(map[string]interface{})
@@ -195,7 +220,9 @@ func Load(path string) *SkeletonData {
 								time := float32(valueMap["time"].(float64))
 
 								timeline.setFrame(i, time, x, y)
-								// TODO: curve
+								if curve, ok := valueMap["curve"]; ok {
+									readCurve(timeline.curve, i, curve)
+								}
 							}
 							duration = float32(math.Max(float64(duration), float64(timeline.frames[timeline.frameCount()*3-3])))
 							timelines = append(timelines, timeline)
@@ -209,4 +236,20 @@ func Load(path string) *SkeletonData {
 	}
 
 	return skeletonData
+}
+
+func readCurve(curve *Curve, frameIndex int, data interface{}) {
+	switch t := data.(type) {
+	default:
+	case string:
+		if t == "stepped" {
+			curve.SetStepped(frameIndex)
+		}
+	case []interface{}:
+		a := float32(t[0].(float64))
+		b := float32(t[1].(float64))
+		c := float32(t[2].(float64))
+		d := float32(t[3].(float64))
+		curve.SetCurve(frameIndex, a, b, c, d)
+	}
 }
