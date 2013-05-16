@@ -5,9 +5,11 @@ spine - spine-go runtime
 
 For an example of rendering, check out [eng](http://github.com/ajhager/eng).
 
+[video](http://vimeo.com/66293166)
+
 TODO
 ----
 
-* Animation loading and rendering
 * Libgdx texture atlas loading
 * More robust attachment loading interface
+* Optimizations
