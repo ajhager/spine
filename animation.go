@@ -209,8 +209,21 @@ func NewAnimation(name string, timelines []Timeline, duration float32) *Animatio
 func (a *Animation) Apply(skeleton *Skeleton, time float32, loop bool) {
 	if loop && a.duration != 0 {
 		time = float32(math.Mod(float64(time), float64(a.duration)))
-		for _, timeline := range a.timelines {
-			timeline.Apply(skeleton, time, 1)
-		}
 	}
+	for _, timeline := range a.timelines {
+		timeline.Apply(skeleton, time, 1)
+	}
+}
+
+func (a *Animation) Mix(skeleton *Skeleton, time float32, loop bool, alpha float32) {
+	if loop && a.duration != 0 {
+		time = float32(math.Mod(float64(time), float64(a.duration)))
+	}
+	for _, timeline := range a.timelines {
+		timeline.Apply(skeleton, time, alpha)
+	}
+}
+
+func (a *Animation) Duration() float32 {
+	return a.duration
 }
