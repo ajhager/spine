@@ -2,24 +2,19 @@ package spine
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"log"
+	"errors"
+	"io"
 	"math"
 	"strconv"
 )
 
 var Scale = float32(1.0)
 
-func Load(path string) *SkeletonData {
-	file, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func New(r io.Reader) (*SkeletonData, error) {
 	var data interface{}
-	err = json.Unmarshal(file, &data)
+	err := json.NewDecoder(r).Decode(&data)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	skeletonData := NewSkeletonData()
@@ -33,7 +28,7 @@ func Load(path string) *SkeletonData {
 		if parentName, ok := boneMap["parent"].(string); ok {
 			_, boneParent = skeletonData.findBone(parentName)
 			if boneParent == nil {
-				log.Fatal("Parent bone not found: ", parentName)
+				return nil, errors.New("Parent bone not found: " + parentName)
 			}
 		}
 
@@ -74,7 +69,7 @@ func Load(path string) *SkeletonData {
 		boneName := slotMap["bone"].(string)
 		_, boneData := skeletonData.findBone(boneName)
 		if boneData == nil {
-			log.Fatal("Slot bone not found: ", boneName)
+			return nil, errors.New("Slot bone not found: " + boneName)
 		}
 		slotData := NewSlotData(slotMap["name"].(string), boneData)
 
@@ -235,7 +230,7 @@ func Load(path string) *SkeletonData {
 		}
 	}
 
-	return skeletonData
+	return skeletonData, nil
 }
 
 func readCurve(curve *Curve, frameIndex int, data interface{}) {
