@@ -8,9 +8,7 @@ import (
 	"strconv"
 )
 
-var Scale = float32(1.0)
-
-func New(r io.Reader) (*SkeletonData, error) {
+func New(r io.Reader, scale float32) (*SkeletonData, error) {
 	var data interface{}
 	err := json.NewDecoder(r).Decode(&data)
 	if err != nil {
@@ -35,15 +33,15 @@ func New(r io.Reader) (*SkeletonData, error) {
 		boneData := NewBoneData(boneName, boneParent)
 
 		if length, ok := boneMap["length"].(float64); ok {
-			boneData.Length = float32(length) * Scale
+			boneData.Length = float32(length) * scale
 		}
 
 		if x, ok := boneMap["x"].(float64); ok {
-			boneData.x = float32(x) * Scale
+			boneData.x = float32(x) * scale
 		}
 
 		if y, ok := boneMap["y"].(float64); ok {
-			boneData.y = float32(y) * Scale
+			boneData.y = float32(y) * scale
 		}
 
 		if rotation, ok := boneMap["rotation"].(float64); ok {
@@ -108,11 +106,11 @@ func New(r io.Reader) (*SkeletonData, error) {
 					attachment := NewAttachment(atName)
 
 					if x, ok := attachmentMap["x"].(float64); ok {
-						attachment.X = float32(x) * Scale
+						attachment.X = float32(x) * scale
 					}
 
 					if y, ok := attachmentMap["y"].(float64); ok {
-						attachment.Y = float32(y) * Scale
+						attachment.Y = float32(y) * scale
 					}
 
 					if rotation, ok := attachmentMap["rotation"].(float64); ok {
@@ -131,12 +129,12 @@ func New(r io.Reader) (*SkeletonData, error) {
 
 					attachment.Width = 32
 					if width, ok := attachmentMap["width"].(float64); ok {
-						attachment.Width = float32(width) * Scale
+						attachment.Width = float32(width) * scale
 					}
 
 					attachment.Height = 32
 					if height, ok := attachmentMap["height"].(float64); ok {
-						attachment.Height = float32(height) * Scale
+						attachment.Height = float32(height) * scale
 					}
 
 					skin.AddAttachment(slotIndex, atName, attachment)
@@ -183,11 +181,11 @@ func New(r io.Reader) (*SkeletonData, error) {
 								valueMap := timelineData[i].(map[string]interface{})
 								x := float32(0)
 								if xx, ok := valueMap["x"].(float64); ok {
-									x = float32(xx) * Scale
+									x = float32(xx) * scale
 								}
 								y := float32(0)
 								if yy, ok := valueMap["y"].(float64); ok {
-									y = float32(yy) * Scale
+									y = float32(yy) * scale
 								}
 								time := float32(valueMap["time"].(float64))
 
