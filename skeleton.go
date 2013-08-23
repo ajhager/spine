@@ -55,8 +55,8 @@ func (s *SkeletonData) findAnimation(name string) (int, *Animation) {
 
 type Skeleton struct {
 	data         *SkeletonData
-	bones        []*Bone
-	slots        []*Slot
+	Bones        []*Bone
+	Slots        []*Slot
 	DrawOrder    []*Slot
 	skin         *Skin
 	X, Y         float32
@@ -75,23 +75,23 @@ func NewSkeleton(skeletonData *SkeletonData) *Skeleton {
 	skeleton.b = 1
 	skeleton.a = 1
 
-	skeleton.bones = make([]*Bone, 0)
+	skeleton.Bones = make([]*Bone, 0)
 	for _, boneData := range skeletonData.bones {
 		var parent *Bone
 		if boneData.parent != nil {
 			i, _ := skeletonData.findBone(boneData.parent.name)
-			parent = skeleton.bones[i]
+			parent = skeleton.Bones[i]
 		}
-		skeleton.bones = append(skeleton.bones, NewBone(boneData, parent))
+		skeleton.Bones = append(skeleton.Bones, NewBone(boneData, parent))
 	}
 
-	skeleton.slots = make([]*Slot, 0)
+	skeleton.Slots = make([]*Slot, 0)
 	skeleton.DrawOrder = make([]*Slot, 0)
 	for _, slotData := range skeletonData.slots {
 		i, _ := skeletonData.findBone(slotData.boneData.name)
-		bone := skeleton.bones[i]
+		bone := skeleton.Bones[i]
 		slot := NewSlot(slotData, skeleton, bone)
-		skeleton.slots = append(skeleton.slots, slot)
+		skeleton.Slots = append(skeleton.Slots, slot)
 		skeleton.DrawOrder = append(skeleton.DrawOrder, slot)
 	}
 
@@ -99,7 +99,7 @@ func NewSkeleton(skeletonData *SkeletonData) *Skeleton {
 }
 
 func (s *Skeleton) UpdateWorldTransform() {
-	for _, bone := range s.bones {
+	for _, bone := range s.Bones {
 		bone.UpdateWorldTransform(s.FlipX, s.FlipY)
 	}
 }
@@ -110,26 +110,26 @@ func (s *Skeleton) SetToSetupPose() {
 }
 
 func (s *Skeleton) setBonesToSetupPose() {
-	for _, bone := range s.bones {
+	for _, bone := range s.Bones {
 		bone.SetToSetupPose()
 	}
 }
 
 func (s *Skeleton) setSlotsToSetupPose() {
-	for _, slot := range s.slots {
+	for _, slot := range s.Slots {
 		slot.SetToSetupPose()
 	}
 }
 
 func (s *Skeleton) RootBone() *Bone {
-	if len(s.bones) != 0 {
-		return s.bones[0]
+	if len(s.Bones) != 0 {
+		return s.Bones[0]
 	}
 	return nil
 }
 
 func (s *Skeleton) FindBone(name string) (int, *Bone) {
-	for i, bone := range s.bones {
+	for i, bone := range s.Bones {
 		if bone.name == name {
 			return i, bone
 		}
@@ -138,7 +138,7 @@ func (s *Skeleton) FindBone(name string) (int, *Bone) {
 }
 
 func (s *Skeleton) FindSlot(name string) (int, *Slot) {
-	for i, slot := range s.slots {
+	for i, slot := range s.Slots {
 		if slot.name == name {
 			return i, slot
 		}
@@ -180,7 +180,7 @@ func (s *Skeleton) AttachmentBySlotIndex(index int, name string) *Attachment {
 }
 
 func (s *Skeleton) SetAttachment(slotName, attachmentName string) {
-	for i, slot := range s.slots {
+	for i, slot := range s.Slots {
 		if slot.data.name == slotName {
 			var attachment *Attachment
 			if attachmentName != "" {

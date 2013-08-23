@@ -37,7 +37,7 @@ func (s *Skin) Attachment(slotIndex int, name string) *Attachment {
 
 func (s *Skin) attachAll(skeleton *Skeleton, oldSkin *Skin) {
 	for _, val := range oldSkin.attachments {
-		slot := skeleton.slots[val.Index]
+		slot := skeleton.Slots[val.Index]
 		if slot.Attachment != nil && slot.Attachment.Name == val.Name {
 			attachment := s.Attachment(val.Index, val.Name)
 			if attachment != nil {

@@ -27,7 +27,7 @@ func (t *RotateTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 		return
 	}
 
-	bone := skeleton.bones[t.boneIndex]
+	bone := skeleton.Bones[t.boneIndex]
 	if time >= frames[len(frames)-2] {
 		amount := bone.data.rotation + frames[len(frames)-1] - bone.Rotation
 		for amount > 180 {
@@ -124,7 +124,7 @@ func (t *TranslateTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 		return
 	}
 
-	bone := skeleton.bones[t.boneIndex]
+	bone := skeleton.Bones[t.boneIndex]
 
 	if time >= frames[len(frames)-3] {
 		bone.X += (bone.data.x + frames[len(frames)-2] - bone.X) * alpha
@@ -173,7 +173,7 @@ func (t *ScaleTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 		return
 	}
 
-	bone := skeleton.bones[t.boneIndex]
+	bone := skeleton.Bones[t.boneIndex]
 
 	if time >= frames[len(frames)-3] {
 		bone.ScaleX += (bone.data.scaleX - 1 + frames[len(frames)-2] - bone.ScaleX) * alpha
