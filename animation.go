@@ -29,7 +29,7 @@ func (t *RotateTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 
 	bone := skeleton.Bones[t.boneIndex]
 	if time >= frames[len(frames)-2] {
-		amount := bone.data.rotation + frames[len(frames)-1] - bone.Rotation
+		amount := bone.Data.rotation + frames[len(frames)-1] - bone.Rotation
 		for amount > 180 {
 			amount -= 360
 		}
@@ -53,7 +53,7 @@ func (t *RotateTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 	for amount < -180 {
 		amount += 360
 	}
-	amount = bone.data.rotation + (lastFrameValue + amount*percent) - bone.Rotation
+	amount = bone.Data.rotation + (lastFrameValue + amount*percent) - bone.Rotation
 	for amount > 180 {
 		amount -= 360
 	}
@@ -127,8 +127,8 @@ func (t *TranslateTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 	bone := skeleton.Bones[t.boneIndex]
 
 	if time >= frames[len(frames)-3] {
-		bone.X += (bone.data.x + frames[len(frames)-2] - bone.X) * alpha
-		bone.Y += (bone.data.y + frames[len(frames)-1] - bone.Y) * alpha
+		bone.X += (bone.Data.x + frames[len(frames)-2] - bone.X) * alpha
+		bone.Y += (bone.Data.y + frames[len(frames)-1] - bone.Y) * alpha
 		return
 	}
 
@@ -139,8 +139,8 @@ func (t *TranslateTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 	percent := 1 - (time-frameTime)/(frames[frameIndex-3]-frameTime)
 	percent = t.curve.CurvePercent(frameIndex/3-1, percent)
 
-	bone.X += (bone.data.x + lastFrameX + (frames[frameIndex+1]-lastFrameX)*percent - bone.X) * alpha
-	bone.Y += (bone.data.y + lastFrameY + (frames[frameIndex+2]-lastFrameY)*percent - bone.Y) * alpha
+	bone.X += (bone.Data.x + lastFrameX + (frames[frameIndex+1]-lastFrameX)*percent - bone.X) * alpha
+	bone.Y += (bone.Data.y + lastFrameY + (frames[frameIndex+2]-lastFrameY)*percent - bone.Y) * alpha
 }
 
 type ScaleTimeline struct {
@@ -176,8 +176,8 @@ func (t *ScaleTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 	bone := skeleton.Bones[t.boneIndex]
 
 	if time >= frames[len(frames)-3] {
-		bone.ScaleX += (bone.data.scaleX - 1 + frames[len(frames)-2] - bone.ScaleX) * alpha
-		bone.ScaleY += (bone.data.scaleY - 1 + frames[len(frames)-1] - bone.ScaleY) * alpha
+		bone.ScaleX += (bone.Data.scaleX - 1 + frames[len(frames)-2] - bone.ScaleX) * alpha
+		bone.ScaleY += (bone.Data.scaleY - 1 + frames[len(frames)-1] - bone.ScaleY) * alpha
 		return
 	}
 
@@ -188,8 +188,8 @@ func (t *ScaleTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 	percent := 1 - (time-frameTime)/(frames[frameIndex-3]-frameTime)
 	percent = t.curve.CurvePercent(frameIndex/3-1, percent)
 
-	bone.ScaleX += (bone.data.scaleX - 1 + lastFrameX + (frames[frameIndex+1]-lastFrameX)*percent - bone.ScaleX) * alpha
-	bone.ScaleY += (bone.data.scaleY - 1 + lastFrameY + (frames[frameIndex+2]-lastFrameY)*percent - bone.ScaleY) * alpha
+	bone.ScaleX += (bone.Data.scaleX - 1 + lastFrameX + (frames[frameIndex+1]-lastFrameX)*percent - bone.ScaleX) * alpha
+	bone.ScaleY += (bone.Data.scaleY - 1 + lastFrameY + (frames[frameIndex+2]-lastFrameY)*percent - bone.ScaleY) * alpha
 }
 
 type Animation struct {

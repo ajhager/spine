@@ -35,7 +35,7 @@ func New(r io.Reader) (*SkeletonData, error) {
 		boneData := NewBoneData(boneName, boneParent)
 
 		if length, ok := boneMap["length"].(float64); ok {
-			boneData.length = float32(length) * Scale
+			boneData.Length = float32(length) * Scale
 		}
 
 		if x, ok := boneMap["x"].(float64); ok {

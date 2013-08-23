@@ -9,7 +9,7 @@ var BoneYDown = false
 type BoneData struct {
 	name     string
 	parent   *BoneData
-	length   float32
+	Length   float32
 	x        float32
 	y        float32
 	rotation float32
@@ -28,7 +28,7 @@ func NewBoneData(name string, parent *BoneData) *BoneData {
 
 type Bone struct {
 	name          string
-	data          *BoneData
+	Data          *BoneData
 	parent        *Bone
 	X             float32
 	Y             float32
@@ -49,7 +49,7 @@ type Bone struct {
 func NewBone(boneData *BoneData, parent *Bone) *Bone {
 	bone := new(Bone)
 	bone.name = boneData.name
-	bone.data = boneData
+	bone.Data = boneData
 	bone.parent = parent
 	bone.ScaleX = 1
 	bone.ScaleY = 1
@@ -60,7 +60,7 @@ func NewBone(boneData *BoneData, parent *Bone) *Bone {
 }
 
 func (b *Bone) SetToSetupPose() {
-	data := b.data
+	data := b.Data
 	b.X = data.x
 	b.Y = data.y
 	b.Rotation = data.rotation
