@@ -33,6 +33,7 @@ type fileBone struct {
 
 type fileAttachment struct {
 	Name string `json:"name"`
+	Type string `json:"type"`
 
 	Rotation interface{} `json:"rotation"`
 	X        interface{} `json:"x"`
@@ -50,7 +51,35 @@ type fileRoot struct {
 	Animations map[string]fileAnim                             `json:"animations"`
 }
 
-func New(r io.Reader, scale float32) (*SkeletonData, error) {
+type AttachmentLoader interface {
+	NewAttachment(skin *Skin, _type, name string) (Attachment, error)
+}
+
+type AtlasAttachmentLoader struct {
+	*Atlas
+}
+
+func (a AtlasAttachmentLoader) NewAttachment(skin *Skin, _type, name string) (Attachment, error) {
+	if _type != "region" && _type != "" {
+		return nil, errors.New("spine: unknown attachment type: " + _type)
+	}
+	attachment := NewRegionAttachment(name)
+	region := a.FindRegion(name)
+	if region == nil {
+		return nil, errors.New("spine: region not found in atlas: " + name + " (" + _type + ")")
+	}
+	attachment.RendererObject = region
+	attachment.SetUVs(region.U, region.V, region.U2, region.V2, region.Rotate)
+	attachment.RegionOffsetX = region.OffsetX
+	attachment.RegionOffsetY = region.OffsetY
+	attachment.RegionWidth = float32(region.Width)
+	attachment.RegionHeight = float32(region.Height)
+	attachment.RegionOriginalWidth = float32(region.OriginalWidth)
+	attachment.RegionOriginalHeight = float32(region.OriginalHeight)
+	return attachment, nil
+}
+
+func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, error) {
 	var root fileRoot
 	err := json.NewDecoder(r).Decode(&root)
 	if err != nil {
@@ -106,7 +135,7 @@ func New(r io.Reader, scale float32) (*SkeletonData, error) {
 		boneName := slot.Bone
 		_, boneData := skeletonData.findBone(boneName)
 		if boneData == nil {
-			return nil, errors.New("Slot bone not found: " + boneName)
+			return nil, errors.New("spine: slot bone not found: " + boneName)
 		}
 		slotData := NewSlotData(slot.Name, boneData)
 
@@ -140,40 +169,13 @@ func New(r io.Reader, scale float32) (*SkeletonData, error) {
 					atName = name
 				}
 
-				attachment := NewAttachment(atName)
-
-				if x, ok := at.X.(float64); ok {
-					attachment.X = float32(x) * scale
+				attachment, err := loader.NewAttachment(skin, at.Type, atName)
+				if err != nil {
+					return nil, err
 				}
-
-				if y, ok := at.Y.(float64); ok {
-					attachment.Y = float32(y) * scale
+				if regionAttach, ok := attachment.(*RegionAttachment); ok {
+					readAttachment(regionAttach, at, scale)
 				}
-
-				if rotation, ok := at.Rotation.(float64); ok {
-					attachment.Rotation = float32(rotation)
-				}
-
-				attachment.ScaleX = 1
-				if scaleX, ok := at.ScaleX.(float64); ok {
-					attachment.ScaleX = float32(scaleX)
-				}
-
-				attachment.ScaleY = 1
-				if scaleY, ok := at.ScaleY.(float64); ok {
-					attachment.ScaleY = float32(scaleY)
-				}
-
-				attachment.Width = 32
-				if width, ok := at.Width.(float64); ok {
-					attachment.Width = float32(width) * scale
-				}
-
-				attachment.Height = 32
-				if height, ok := at.Height.(float64); ok {
-					attachment.Height = float32(height) * scale
-				}
-
 				skin.AddAttachment(slotIndex, atName, attachment)
 			}
 		}
@@ -259,6 +261,41 @@ func New(r io.Reader, scale float32) (*SkeletonData, error) {
 	}
 
 	return skeletonData, nil
+}
+
+func readAttachment(attachment *RegionAttachment, at fileAttachment, scale float32) {
+	if x, ok := at.X.(float64); ok {
+		attachment.X = float32(x) * scale
+	}
+
+	if y, ok := at.Y.(float64); ok {
+		attachment.Y = float32(y) * scale
+	}
+
+	if rotation, ok := at.Rotation.(float64); ok {
+		attachment.Rotation = float32(rotation)
+	}
+
+	attachment.ScaleX = 1
+	if scaleX, ok := at.ScaleX.(float64); ok {
+		attachment.ScaleX = float32(scaleX)
+	}
+
+	attachment.ScaleY = 1
+	if scaleY, ok := at.ScaleY.(float64); ok {
+		attachment.ScaleY = float32(scaleY)
+	}
+
+	attachment.Width = 32
+	if width, ok := at.Width.(float64); ok {
+		attachment.Width = float32(width) * scale
+	}
+
+	attachment.Height = 32
+	if height, ok := at.Height.(float64); ok {
+		attachment.Height = float32(height) * scale
+	}
+	attachment.updateOffset()
 }
 
 func readCurve(curve *Curve, frameIndex int, data interface{}) {

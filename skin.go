@@ -7,7 +7,7 @@ import (
 type skinData struct {
 	Index      int
 	Name       string
-	Attachment *Attachment
+	Attachment Attachment
 }
 
 type Skin struct {
@@ -22,12 +22,12 @@ func NewSkin(name string) *Skin {
 	return skin
 }
 
-func (s *Skin) AddAttachment(slotIndex int, name string, attachment *Attachment) {
+func (s *Skin) AddAttachment(slotIndex int, name string, attachment Attachment) {
 	data := &skinData{slotIndex, name, attachment}
 	s.attachments[fmt.Sprintf("%v:%v", slotIndex, name)] = data
 }
 
-func (s *Skin) Attachment(slotIndex int, name string) *Attachment {
+func (s *Skin) Attachment(slotIndex int, name string) Attachment {
 	values, ok := s.attachments[fmt.Sprintf("%v:%v", slotIndex, name)]
 	if !ok {
 		return nil
@@ -38,7 +38,7 @@ func (s *Skin) Attachment(slotIndex int, name string) *Attachment {
 func (s *Skin) attachAll(skeleton *Skeleton, oldSkin *Skin) {
 	for _, val := range oldSkin.attachments {
 		slot := skeleton.Slots[val.Index]
-		if slot.Attachment != nil && slot.Attachment.Name == val.Name {
+		if slot.Attachment != nil && slot.Attachment.Name() == val.Name {
 			attachment := s.Attachment(val.Index, val.Name)
 			if attachment != nil {
 				slot.SetAttachment(attachment)

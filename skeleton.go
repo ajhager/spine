@@ -161,12 +161,12 @@ func (s *Skeleton) SetSkin(skin *Skin) {
 	s.skin = skin
 }
 
-func (s *Skeleton) AttachmentBySlotName(slot string, attachment string) *Attachment {
+func (s *Skeleton) AttachmentBySlotName(slot string, attachment string) Attachment {
 	i, _ := s.data.findSlot(slot)
 	return s.AttachmentBySlotIndex(i, attachment)
 }
 
-func (s *Skeleton) AttachmentBySlotIndex(index int, name string) *Attachment {
+func (s *Skeleton) AttachmentBySlotIndex(index int, name string) Attachment {
 	if s.skin != nil {
 		attachment := s.skin.Attachment(index, name)
 		if attachment != nil {
@@ -182,7 +182,7 @@ func (s *Skeleton) AttachmentBySlotIndex(index int, name string) *Attachment {
 func (s *Skeleton) SetAttachment(slotName, attachmentName string) {
 	for i, slot := range s.Slots {
 		if slot.data.name == slotName {
-			var attachment *Attachment
+			var attachment Attachment
 			if attachmentName != "" {
 				attachment = s.AttachmentBySlotIndex(i, attachmentName)
 				if attachment == nil {
