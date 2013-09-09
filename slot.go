@@ -25,7 +25,7 @@ type Slot struct {
 	Bone           *Bone
 	R, G, B, A     float32
 	attachmentTime float32
-	Attachment     *Attachment
+	Attachment     Attachment
 }
 
 func NewSlot(slotData *SlotData, skeleton *Skeleton, bone *Bone) *Slot {
@@ -56,7 +56,7 @@ func (s *Slot) SetToSetupPose() {
 	}
 }
 
-func (s *Slot) SetAttachment(attachment *Attachment) {
+func (s *Slot) SetAttachment(attachment Attachment) {
 	s.Attachment = attachment
 	s.attachmentTime = s.skeleton.time
 }
