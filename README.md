@@ -10,6 +10,4 @@ For an example of rendering, check out [eng](http://github.com/ajhager/eng).
 TODO
 ----
 
-* Libgdx texture atlas loading
-* More robust attachment loading interface
 * Optimizations
