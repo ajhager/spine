@@ -10,6 +10,10 @@ func NewCurve(frameCount int) *Curve {
 	return curve
 }
 
+func (c *Curve) frameCount() int {
+	return len(c.curves)/6 + 1
+}
+
 func (c *Curve) SetLinear(index int) {
 	c.curves[index*6] = 0
 }
