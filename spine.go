@@ -192,8 +192,7 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 					n := len(timelineData)
 					timeline := NewRotateTimeline(n)
 					timeline.boneIndex = boneIndex
-					for i := 0; i < n; i++ {
-						valueMap := timelineData[i]
+					for i, valueMap := range timelineData {
 						time := float32(valueMap["time"].(float64))
 						angle := float32(valueMap["angle"].(float64))
 						timeline.setFrame(i, time, angle)
@@ -208,8 +207,7 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 					n := len(timelineData)
 					timeline := NewTranslateTimeline(n)
 					timeline.boneIndex = boneIndex
-					for i := 0; i < n; i++ {
-						valueMap := timelineData[i]
+					for i, valueMap := range timelineData {
 						x := float32(0)
 						if xx, ok := valueMap["x"].(float64); ok {
 							x = float32(xx) * scale
@@ -231,8 +229,7 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 					n := len(timelineData)
 					timeline := NewScaleTimeline(n)
 					timeline.boneIndex = boneIndex
-					for i := 0; i < n; i++ {
-						valueMap := timelineData[i]
+					for i, valueMap := range timelineData {
 						x := float32(0)
 						if xx, ok := valueMap["x"].(float64); ok {
 							x = float32(xx)
