@@ -26,6 +26,7 @@ func NewAtlas(r io.Reader, loader TextureLoader) (*Atlas, error) {
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if len(line) == 0 {
+			page = nil
 			continue
 		}
 		if page == nil {
