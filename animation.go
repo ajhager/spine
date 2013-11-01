@@ -192,6 +192,120 @@ func (t *ScaleTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
 	bone.ScaleY += (bone.Data.scaleY - 1 + lastFrameY + (frames[frameIndex+2]-lastFrameY)*percent - bone.ScaleY) * alpha
 }
 
+type ColorTimeline struct {
+	slotIndex int
+	frames    []float32
+	curve     *Curve
+}
+
+func NewColorTimeline(l int) *ColorTimeline {
+	return &ColorTimeline{
+		frames: make([]float32, l*5),
+		curve:  NewCurve(l),
+	}
+}
+
+func (t *ColorTimeline) frameCount() int {
+	return t.curve.frameCount()
+}
+
+func (t *ColorTimeline) setFrame(index int, time, r, g, b, a float32) {
+	index *= 5
+	frames := t.frames
+	frames[index] = time
+	frames[index+1] = r
+	frames[index+2] = g
+	frames[index+3] = b
+	frames[index+4] = a
+}
+
+func (t *ColorTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
+	frames := t.frames
+	if time < frames[0] {
+		return // Time is before first frame.
+	}
+
+	slot := skeleton.Slots[t.slotIndex]
+
+	if time >= frames[len(t.frames)-5] { // Time is after last frame.
+		i := len(frames) - 1
+		slot.R = frames[i-3]
+		slot.G = frames[i-2]
+		slot.B = frames[i-1]
+		slot.A = frames[i]
+		return
+	}
+
+	// Interpolate between the last frame and the current frame.
+	frameIndex := binarySearch(frames, time, 5)
+	lastFrameR := frames[frameIndex-4]
+	lastFrameG := frames[frameIndex-3]
+	lastFrameB := frames[frameIndex-2]
+	lastFrameA := frames[frameIndex-1]
+	frameTime := frames[frameIndex]
+	percent := 1 - (time-frameTime)/(frames[frameIndex-5]-frameTime)
+	percent = t.curve.CurvePercent(frameIndex/5-1, percent)
+
+	r := lastFrameR + (frames[frameIndex+1]-lastFrameR)*percent
+	g := lastFrameG + (frames[frameIndex+2]-lastFrameG)*percent
+	b := lastFrameB + (frames[frameIndex+3]-lastFrameB)*percent
+	a := lastFrameA + (frames[frameIndex+4]-lastFrameA)*percent
+	if alpha < 1 {
+		slot.R += (r - slot.R) * alpha
+		slot.G += (g - slot.G) * alpha
+		slot.B += (b - slot.B) * alpha
+		slot.A += (a - slot.A) * alpha
+	} else {
+		slot.R = r
+		slot.G = g
+		slot.B = b
+		slot.A = a
+	}
+}
+
+type AttachmentTimeline struct {
+	slotIndex       int
+	frames          []float32
+	attachmentNames []string
+}
+
+func NewAttachmentTimeline(l int) *AttachmentTimeline {
+	return &AttachmentTimeline{
+		frames:          make([]float32, l),
+		attachmentNames: make([]string, l),
+	}
+}
+
+func (t *AttachmentTimeline) frameCount() int {
+	return len(t.frames)
+}
+
+func (t *AttachmentTimeline) setFrame(index int, time float32, attachmentName string) {
+	t.frames[index] = time
+	t.attachmentNames[index] = attachmentName
+}
+
+func (t *AttachmentTimeline) Apply(skeleton *Skeleton, time, alpha float32) {
+	frames := t.frames
+	if time < frames[0] {
+		return // Time is before first frame.
+	}
+
+	var frameIndex int
+	if time >= frames[len(frames)-1] { // Time is after last frame.
+		frameIndex = len(frames) - 1
+	} else {
+		frameIndex = binarySearch(frames, time, 1) - 1
+	}
+
+	attachmentName := t.attachmentNames[frameIndex]
+	var attachment Attachment
+	if attachmentName != "" {
+		attachment = skeleton.AttachmentBySlotIndex(t.slotIndex, attachmentName)
+	}
+	skeleton.Slots[t.slotIndex].Attachment = attachment
+}
+
 type Animation struct {
 	name      string
 	timelines []Timeline

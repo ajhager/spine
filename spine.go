@@ -9,7 +9,8 @@ import (
 )
 
 type fileAnim struct {
-	Bones map[string]map[string][]interface{} `json:"bones"`
+	Bones map[string]map[string][]map[string]interface{} `json:"bones"`
+	Slots map[string]map[string][]map[string]interface{} `json:"slots"`
 }
 
 type fileSlot struct {
@@ -140,18 +141,14 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 		slotData := NewSlotData(slot.Name, boneData)
 
 		if color := slot.Color; color != "" {
-			if red, err := strconv.ParseUint(color[0:2], 16, 8); err != nil {
-				slotData.r = float32(red) / 255.0
+			c, err := toColor(color)
+			if err != nil {
+				return nil, errors.New("spine: failed to parse color: " + err.Error())
 			}
-			if green, err := strconv.ParseUint(color[2:4], 16, 8); err != nil {
-				slotData.g = float32(green) / 255.0
-			}
-			if blue, err := strconv.ParseUint(color[4:6], 16, 8); err != nil {
-				slotData.b = float32(blue) / 255.0
-			}
-			if alpha, err := strconv.ParseUint(color[6:8], 16, 8); err != nil {
-				slotData.a = float32(alpha) / 255.0
-			}
+			slotData.r = c[0]
+			slotData.g = c[1]
+			slotData.b = c[2]
+			slotData.a = c[3]
 		}
 
 		slotData.attachmentName = slot.Attachment
@@ -185,18 +182,17 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 		}
 	}
 
-	for animName, boneMap := range root.Animations {
+	for animName, fileAnim := range root.Animations {
 		timelines := make([]Timeline, 0)
 		duration := float32(0)
-		for boneName, timelineMap := range boneMap.Bones {
+		for boneName, timelineMap := range fileAnim.Bones {
 			boneIndex, _ := skeletonData.findBone(boneName)
 			for timelineType, timelineData := range timelineMap {
 				if timelineType == "rotate" {
 					n := len(timelineData)
 					timeline := NewRotateTimeline(n)
 					timeline.boneIndex = boneIndex
-					for i := 0; i < n; i++ {
-						valueMap := timelineData[i].(map[string]interface{})
+					for i, valueMap := range timelineData {
 						time := float32(valueMap["time"].(float64))
 						angle := float32(valueMap["angle"].(float64))
 						timeline.setFrame(i, time, angle)
@@ -211,8 +207,7 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 					n := len(timelineData)
 					timeline := NewTranslateTimeline(n)
 					timeline.boneIndex = boneIndex
-					for i := 0; i < n; i++ {
-						valueMap := timelineData[i].(map[string]interface{})
+					for i, valueMap := range timelineData {
 						x := float32(0)
 						if xx, ok := valueMap["x"].(float64); ok {
 							x = float32(xx) * scale
@@ -234,8 +229,7 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 					n := len(timelineData)
 					timeline := NewScaleTimeline(n)
 					timeline.boneIndex = boneIndex
-					for i := 0; i < n; i++ {
-						valueMap := timelineData[i].(map[string]interface{})
+					for i, valueMap := range timelineData {
 						x := float32(0)
 						if xx, ok := valueMap["x"].(float64); ok {
 							x = float32(xx)
@@ -256,11 +250,55 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 				}
 			}
 		}
+		for slotName, timelineMap := range fileAnim.Slots {
+			slotIndex, _ := skeletonData.findSlot(slotName)
+
+			for timelineName, values := range timelineMap {
+				n := len(values)
+				if timelineName == "color" {
+					timeline := NewColorTimeline(n)
+					timeline.slotIndex = slotIndex
+
+					for frameIndex, valueMap := range values {
+						time := float32(valueMap["time"].(float64))
+						c, err := toColor(valueMap["color"].(string))
+						if err != nil {
+							return nil, errors.New("spine: failed to parse color: " + err.Error())
+						}
+						timeline.setFrame(frameIndex, time, c[0], c[1], c[2], c[3])
+						readCurve(timeline.curve, frameIndex, valueMap)
+					}
+					duration = float32(math.Max(float64(duration), float64(timeline.frames[timeline.frameCount()*5-5])))
+					timelines = append(timelines, timeline)
+				} else if timelineName == "attachment" {
+					timeline := NewAttachmentTimeline(n)
+					timeline.slotIndex = slotIndex
+
+					for frameIndex, valueMap := range values {
+						time := float32(valueMap["time"].(float64))
+						timeline.setFrame(frameIndex, time, valueMap["name"].(string))
+					}
+					duration = float32(math.Max(float64(duration), float64(timeline.frames[timeline.frameCount()-1])))
+					timelines = append(timelines, timeline)
+				}
+			}
+		}
 		anim := NewAnimation(animName, timelines, duration)
 		skeletonData.animations = append(skeletonData.animations, anim)
 	}
 
 	return skeletonData, nil
+}
+
+func toColor(colorStr string) (c [4]float32, err error) {
+	for i := 0; i < len(c); i++ {
+		var b uint64
+		if b, err = strconv.ParseUint(colorStr[i*2:(i+1)*2], 16, 8); err != nil {
+			return
+		}
+		c[i] = float32(b)/255.0
+	}
+	return
 }
 
 func readAttachment(attachment *RegionAttachment, at fileAttachment, scale float32) {

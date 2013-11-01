@@ -68,16 +68,14 @@ func (r *RegionAttachment) SetUVs(u float32, v float32, u2 float32, v2 float32, 
 func (r *RegionAttachment) updateOffset() {
 	width := r.Width
 	height := r.Height
-	localX2 := width / 2
-	localY2 := height / 2
-	localX := -localX2
-	localY := -localY2
 	scaleX := r.ScaleX
 	scaleY := r.ScaleY
-	localX *= scaleX
-	localY *= scaleY
-	localX2 *= scaleX
-	localY2 *= scaleY
+	regionScaleX := width / r.RegionOriginalWidth * scaleX;
+	regionScaleY := height / r.RegionOriginalHeight * scaleY;
+	localX := -width / 2 * scaleX + r.RegionOffsetX * regionScaleX;
+	localY := -height / 2 * scaleY + r.RegionOffsetY * regionScaleY;
+	localX2 := localX + r.RegionWidth * regionScaleX;
+	localY2 := localY + r.RegionHeight * regionScaleY;
 	rotation := r.Rotation
 	rads := float64(rotation) * math.Pi / 180
 	cos := float32(math.Cos(rads))
