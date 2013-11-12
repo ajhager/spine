@@ -139,7 +139,7 @@ func (s *Skeleton) FindBone(name string) (int, *Bone) {
 
 func (s *Skeleton) FindSlot(name string) (int, *Slot) {
 	for i, slot := range s.Slots {
-		if slot.name == name {
+		if slot.data.name == name {
 			return i, slot
 		}
 	}

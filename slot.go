@@ -19,7 +19,6 @@ func NewSlotData(name string, boneData *BoneData) *SlotData {
 }
 
 type Slot struct {
-	name           string
 	data           *SlotData
 	skeleton       *Skeleton
 	Bone           *Bone

@@ -160,10 +160,10 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 		skin := NewSkin(skinName)
 		for slotName, slotMap := range skinMap {
 			slotIndex, _ := skeletonData.findSlot(slotName)
-			for atName, at := range slotMap {
-
-				if name := at.Name; name != "" {
-					atName = name
+			for name, at := range slotMap {
+				atName := name
+				if at.Name != "" {
+					atName = at.Name
 				}
 
 				attachment, err := loader.NewAttachment(skin, at.Type, atName)
@@ -173,7 +173,7 @@ func New(r io.Reader, scale float32, loader AttachmentLoader) (*SkeletonData, er
 				if regionAttach, ok := attachment.(*RegionAttachment); ok {
 					readAttachment(regionAttach, at, scale)
 				}
-				skin.AddAttachment(slotIndex, atName, attachment)
+				skin.AddAttachment(slotIndex, name, attachment)
 			}
 		}
 		skeletonData.skins = append(skeletonData.skins, skin)
@@ -296,7 +296,7 @@ func toColor(colorStr string) (c [4]float32, err error) {
 		if b, err = strconv.ParseUint(colorStr[i*2:(i+1)*2], 16, 8); err != nil {
 			return
 		}
-		c[i] = float32(b)/255.0
+		c[i] = float32(b) / 255.0
 	}
 	return
 }
